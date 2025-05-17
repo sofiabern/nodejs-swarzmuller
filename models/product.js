@@ -9,6 +9,8 @@ const getProductsFilePath = () => {
   );
 };
 
+const Cart = require('./cart')
+
 const getProductsFromFile = (cb) => {
   const p = getProductsFilePath();
 
@@ -52,6 +54,22 @@ module.exports = class Product {
         });
       }
 
+    });
+  }
+
+  static deleteById(id) {
+    const p = getProductsFilePath();
+    getProductsFromFile((products) => {
+      const product = products.find(prod => prod.id === id)
+      const updatedProducts = products.filter((prod) => prod.id !== id);
+      fs.writeFile(p, JSON.stringify(updatedProducts, null, 2), (err) => {
+        if (err) {
+          console.log("Помилка при записі:", err);
+        } else {
+        Cart.deleteProduct(id, product.price);
+        }
+
+      });
     });
   }
 
