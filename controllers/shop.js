@@ -1,4 +1,5 @@
 const Product = require("../models/product.js");
+const Order = require("../models/order.js");
 
 exports.getProducts = (req, res, next) => {
   Product.find()
@@ -44,15 +45,14 @@ exports.getIndex = (req, res, next) => {
 
 exports.getCart = (req, res, next) => {
   req.user
-    .getCart()
-    .then((products) => {
-      res
-        .render("shop/cart", {
-          path: "/cart",
-          pageTitle: "Your Cart",
-          products: products,
-        })
-
+    .populate("cart.items.productId")
+    .then((user) => {
+      const products = user.cart.items;
+      res.render("shop/cart", {
+        path: "/cart",
+        pageTitle: "Your Cart",
+        products: products,
+      });
     })
     .catch((err) => console.log(err));
 };
@@ -72,27 +72,40 @@ exports.postCart = (req, res, next) => {
 exports.postCartDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
 
-  req.user
-  .deleteItemFromCart(prodId)
-    .then((result) => {
-      res.redirect("/cart");
-    });
+  req.user.removeFromCart(prodId).then((result) => {
+    res.redirect("/cart");
+  });
 };
 
 exports.postOrder = (req, res, next) => {
-  let fetchedCart;
-
   req.user
-  .addOrder()
-    .then((result) => {
+    .populate("cart.items.productId")
+    .then((user) => {
+      console.log(user.cart.items);
+      const products = user.cart.items.map((i) => {
+        return { quantity: i.quantity, product: { ...i.productId._doc } };
+      });
+
+      const order = new Order({
+        user: {
+          name: req.user.name,
+          userId: req.user,
+        },
+        products: products,
+      });
+      return order.save();
+    })
+    .then(() => {
+      return req.user.clearCart();
+    })
+    .then(() => {
       res.redirect("/orders");
     })
     .catch((err) => console.log(err));
 };
 
 exports.getOrders = (req, res, next) => {
-  req.user
-    .getOrders()
+  Order.find({"user.userId": req.user.id})
     .then((orders) => {
       res.render("shop/orders", {
         path: "/orders",
