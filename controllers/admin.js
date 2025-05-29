@@ -15,14 +15,14 @@ exports.postAddProduct = (req, res, next) => {
   const price = req.body.price;
   const description = req.body.description;
 
-  console.log(req.session.user);
+  console.log(req.user);
 
   const product = new Product({
     title: title,
     imageUrl: imageUrl,
     price: price,
     description: description,
-    userId: req.session.user,
+    userId: req.user,
   });
 
   product
