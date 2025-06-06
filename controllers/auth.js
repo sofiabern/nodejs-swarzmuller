@@ -1,12 +1,27 @@
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
+const sendgridTransport = require("nodemailer-sendgrid-transport");
+const dotenv = require("dotenv")
+
+dotenv.config();
+
+
 const User = require("../models/user");
 
+const transporter = nodemailer.createTransport(
+  sendgridTransport({
+    auth: {
+      api_key: process.env.SENDGRID_API_KEY,
+    },
+  })
+);
+
 exports.getLogin = (req, res, next) => {
-  let message = req.flash('error')
-  if(message.length > 0){
-    message = message[0]
-  }else{
-    message = null
+  let message = req.flash("error");
+  if (message.length > 0) {
+    message = message[0];
+  } else {
+    message = null;
   }
   res.render("auth/login", {
     path: "/login",
@@ -35,7 +50,7 @@ exports.postLogin = (req, res, next) => {
   User.findOne({ email: email })
     .then((user) => {
       if (!user) {
-        req.flash('error', 'Invalid email or password')
+        req.flash("error", "Invalid email or password");
         return res.redirect("/login");
       }
       bcrypt
@@ -46,7 +61,7 @@ exports.postLogin = (req, res, next) => {
             req.session.user = user;
             return req.session.save((err) => {
               console.log(err);
-               res.redirect("/");
+              res.redirect("/");
             });
           }
           req.flash("error", "Invalid email or password");
@@ -68,7 +83,10 @@ exports.postSignup = (req, res, next) => {
   User.findOne({ email: email })
     .then((userDoc) => {
       if (userDoc) {
-        req.flash("error", "Email exists already, please pick a different one.");
+        req.flash(
+          "error",
+          "Email exists already, please pick a different one."
+        );
         return res.redirect("/signup");
       }
       return bcrypt
@@ -83,12 +101,18 @@ exports.postSignup = (req, res, next) => {
           });
           user.save();
         })
-        .then((result) => {
-          console.log(result);
+        .then(() => {
           res.redirect("/login");
+          return transporter
+            .sendMail({
+              to: email,
+              from: "cauliflowers33@gmail.com",
+              subject: "Signup succeeded!",
+              html: "<h1>You successfully signed up!</h1>",
+            })
+            .catch((err) => console.log(err));
         });
     })
-
     .catch((err) => console.log(err));
 };
 
