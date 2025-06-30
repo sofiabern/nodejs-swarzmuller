@@ -3,6 +3,8 @@ const path = require("path");
 const { body, validationResult } = require("express-validator");
 const Post = require("../models/post");
 const User = require("../models/user.js");
+const post = require("../models/post");
+const user = require("../models/user.js");
 
 exports.getPosts = (req, res, next) => {
   const currentPage = +req.query.page || 1;
@@ -114,6 +116,12 @@ exports.updatePost = (req, res, next) => {
     imageUrl = req.file.path.replace("\\", "/");
   }
 
+  if(post.creator.toString() !== req.userId) {
+    const error = new Error('Not authorized')
+    error.statusCode = 403;
+    throw error
+  }
+
   if (!imageUrl) {
     const error = new Error("No file picked.");
     error.statusCode = 422;
@@ -156,11 +164,25 @@ exports.deletePost = (req, res, next) => {
         throw error;
       }
 
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error("Not authorized");
+        error.statusCode = 403;
+        throw error;
+      }
+
       clearImage(post.imageUrl);
       return Post.findByIdAndDelete(postId);
     })
     .then(() => {
+      return User.findById(req.userId)
+    })
+    .then((user) => {
+      user.posts.pull(postId)
+      return user.save()
+    })
+    .then(result => {
       res.status(200).json({ message: "Deleted post." });
+
     })
     .catch((err) => {
       if (!err.statusCode) {
