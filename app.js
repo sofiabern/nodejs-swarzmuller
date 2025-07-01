@@ -60,6 +60,16 @@ const MONGODB_URI =
 mongoose
   .connect(MONGODB_URI)
   .then(() => {
-    app.listen(8080);
+   const server = app.listen(8080);
+   const socket = require("./socket");
+   const io = socket.init(server, {
+     cors: {
+       origin: "*",
+       methods: ["GET", "POST"],
+     },
+   });
+     io.on('connection', socket => {
+    console.log('Client connected')
+   })
   })
   .catch((err) => console.log(err));
