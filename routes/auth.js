@@ -27,6 +27,6 @@ router.post('/login', authController.login)
 
 router.get('/status', isAuth, authController.getUserStatus)
 
-router.patch('/status', isAuth, [body('status').trim().not().isEmpty()], authController.updateuserStatus)
+router.patch('/status', isAuth, [body('status').trim().not().isEmpty()], authController.updateUserStatus)
 
 module.exports = router;
