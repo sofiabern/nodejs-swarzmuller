@@ -2,6 +2,7 @@ const { validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+
 const User = require("../models/user");
 
 exports.signup = async (req, res, next) => {
@@ -57,11 +58,13 @@ exports.login = async (req, res, next) => {
       { expiresIn: "1h" }
     );
     res.status(200).json({ token: token, userId: user._id.toString() });
+    return
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
     }
     next(err);
+    return err
   }
 };
 
@@ -103,4 +106,6 @@ exports.updateUserStatus = async (req, res, next) => {
     }
     next(err);
   }
+
+
 };
