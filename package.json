@@ -20,6 +20,7 @@
     "mocha": "^11.7.1",
     "mongoose": "^8.16.1",
     "multer": "^2.0.1",
+    "sinon": "^21.0.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
