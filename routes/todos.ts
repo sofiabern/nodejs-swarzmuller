@@ -1,17 +1,29 @@
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { cloneState } from "https://deno.land/x/oak@v12.6.1/structured_clone.ts";
+import { getDb } from "../helpers/db_client.ts";
+import { ObjectId} from "npm:mongodb@6.1.0";
+
 
 const router = new Router();
 
-interface Todo {
-  id: string;
+type Todo = {
+  _id: ObjectId;
   text: string;
-}
+};
 
 let todos: Todo[] = [];
 
-router.get("/todos", (ctx) => {
-  ctx.response.body = { todos: todos };
+
+
+router.get("/todos", async (ctx) => {
+const todos = await getDb().collection<Todo>("todos").find().toArray();
+
+const transformedTodos = todos.map((todo) => ({
+  id: todo._id.toString(),
+  text: todo.text,
+}));
+
+ctx.response.body = {todos: transformedTodos}
+
 });
 
 router.post("/todos", async (ctx) => {
